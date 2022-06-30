@@ -17,13 +17,13 @@ head -10000 /workspace/datasets/fasttext/normalized_shuffled_pruned_labeled_prod
 tail -10000 /workspace/datasets/fasttext/normalized_shuffled_pruned_labeled_products.txt > pruned_test_data.txt
 
 # train model
-~/fastText-0.9.2/fasttext supervised -input training_data.txt -output product_classifier -lr 1.0 -epoch 25 -wordNgrams 2
+~/fastText-0.9.2/fasttext supervised -input pruned_training_data.txt -output pruned_product_classifier -lr 1.0 -epoch 25 -wordNgrams 2
 
 # test model interactively
-# ~/fastText-0.9.2/fasttext predict product_classifier.bin -
+# ~/fastText-0.9.2/fasttext predict pruned_product_classifier.bin -
 
 # test model @1
-~/fastText-0.9.2/fasttext test product_classifier.bin test_data.txt
+~/fastText-0.9.2/fasttext test pruned_product_classifier.bin pruned_test_data.txt
 
 # test model @5
-~/fastText-0.9.2/fasttext test product_classifier.bin test_data.txt 5
+~/fastText-0.9.2/fasttext test pruned_product_classifier.bin pruned_test_data.txt 5
