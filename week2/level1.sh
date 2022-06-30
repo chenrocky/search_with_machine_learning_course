@@ -1,5 +1,5 @@
 # generate training data
-python week2/createContentTrainingData.py --output /workspace/datasets/fasttext/labeled_products.txt
+python createContentTrainingData.py --output /workspace/datasets/fasttext/labeled_products.txt
 
 # shuffle data
 shuf /workspace/datasets/fasttext/labeled_products.txt > /workspace/datasets/fasttext/shuffled_labeled_products.txt

@@ -1,8 +1,8 @@
 # generate training data
-python week2/createContentTrainingData.py --output /workspace/datasets/fasttext/labeled_products.txt
+python createContentTrainingData.py --output /workspace/datasets/fasttext/labeled_products.txt
 
 # prune data
-python week2/filter_gt_500_products.py
+python filter_gt_500_products.py
 
 # shuffle data
 shuf /workspace/datasets/fasttext/pruned_labeled_products.txt > /workspace/datasets/fasttext/shuffled_pruned_labeled_products.txt
