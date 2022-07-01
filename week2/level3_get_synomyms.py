@@ -12,13 +12,29 @@ with open("/workspace/datasets/fasttext/top_words.txt") as f:
         topwords.append(line.rstrip('\n'))
 
 # load in synonym model
-model = fasttext.load_model("/workspace/datasets/fasttext/title_model.bin")
+model = fasttext.load_model("/workspace/datasets/fasttext/normalized_title_model.bin")
 
-# get nearest neighbor
-nn = model.get_nearest_neighbors("black")
 
-synonyms = [x[1] for x in nn]
+# topword followed by neighbors exceeding threshold
+output = []
+threshold = 0.70
+for word in topwords:
+    # get nearest neighbor
+    nn = model.get_nearest_neighbors(word)
+    
+    # filter on threshold
+    synonyms = [x[1] for x in nn if x[0] >= threshold]
+    
+    # insert topword at beginning of list
+    synonyms.insert(0, word)
 
-synonyms.insert(0, "black")
+    # csv
+    stage = ', '.join(synonyms)
 
-output = ', '.join(synonyms)
+    # append to output list
+    output.append(stage)
+
+# write
+with open("/workspace/datasets/fasttext/synonyms.csv", "w") as f:
+    for item in output:
+        f.write(item+'\n')
