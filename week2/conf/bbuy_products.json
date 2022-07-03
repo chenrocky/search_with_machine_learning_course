@@ -10,8 +10,11 @@
           ]
         },
         "synonym": {
-          "tokenizer": "whitespace",
-          "filter": [ "stemmer", "synonym" ]
+          "tokenizer": "whitepace",
+          "filter": [
+            "stemmer",
+            "synonym"
+          ]
         }
       },
       "tokenizer": {
@@ -31,7 +34,7 @@
         },
         "synonym": {
           "type": "synonym",
-          "synonyms_path": "/workspace/datasets/fasttext/synonyms.csv"
+          "synonyms_path": "synonyms.csv"
         }
       }
     }
