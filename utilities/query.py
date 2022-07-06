@@ -11,6 +11,7 @@ from urllib.parse import urljoin
 import pandas as pd
 import fileinput
 import logging
+import fasttext
 
 
 logger = logging.getLogger(__name__)
@@ -186,11 +187,28 @@ def create_query(user_query, click_prior_query, filters, sort="_score", sortDir=
     return query_obj
 
 
-def search(client, user_query, index="bbuy_products", sort="_score", sortDir="desc"):
+def search(client, user_query, model, index="bbuy_products", sort="_score", sortDir="desc"):
     #### W3: classify the query
+    model_output = model.predict(user_query)
+    pred = model_output[0][0]
+    proba = model_output[1][0]
+    print(pred, proba)
+    if proba < 0.5:
+        query_category = pred
+    else:
+        query_category = None
+    if query_category is not None and len(query_category) > 0:
+        term_filter = {
+            "term": {
+                "categoryPathIds.keyword": query_category
+            }
+        }
+    else:
+        term_filter = None
+
     #### W3: create filters and boosts
     # Note: you may also want to modify the `create_query` method above
-    query_obj = create_query(user_query, click_prior_query=None, filters=None, sort=sort, sortDir=sortDir, source=["name", "shortDescription"])
+    query_obj = create_query(user_query, click_prior_query=None, filters=term_filter, sort=sort, sortDir=sortDir, source=["name", "shortDescription"])
     logging.info(query_obj)
     response = client.search(query_obj, index=index)
     if response and response['hits']['hits'] and len(response['hits']['hits']) > 0:
@@ -239,13 +257,17 @@ if __name__ == "__main__":
 
     )
     index_name = args.index
+    
+    # load in query classifier model
+    model = fasttext.load_model("/workspace/search_with_machine_learning_course/week3/query_classifier.bin")
+
     query_prompt = "\nEnter your query (type 'Exit' to exit or hit ctrl-c):"
     print(query_prompt)
     for line in fileinput.input():
         query = line.rstrip()
         if query == "Exit":
             break
-        search(client=opensearch, user_query=query, index=index_name)
+        search(client=opensearch, user_query=query, model=model, index=index_name)
 
         print(query_prompt)
 
