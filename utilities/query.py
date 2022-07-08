@@ -187,28 +187,36 @@ def create_query(user_query, click_prior_query, filters, sort="_score", sortDir=
     return query_obj
 
 
-def search(client, user_query, model, index="bbuy_products", sort="_score", sortDir="desc"):
+def search(client, user_query, model=None, index="bbuy_products", sort="_score", sortDir="desc"):
     #### W3: classify the query
-    model_output = model.predict(user_query)
-    pred = model_output[0][0]
-    proba = model_output[1][0]
-    print(pred, proba)
-    if proba < 0.5:
-        query_category = pred
-    else:
-        query_category = None
-    if query_category is not None and len(query_category) > 0:
-        term_filter = {
-            "term": {
-                "categoryPathIds.keyword": query_category
-            }
-        }
-    else:
-        term_filter = None
-
     #### W3: create filters and boosts
     # Note: you may also want to modify the `create_query` method above
-    query_obj = create_query(user_query, click_prior_query=None, filters=term_filter, sort=sort, sortDir=sortDir, source=["name", "shortDescription"])
+    threshold = 0.5
+    categories = []
+    if model:
+        moutput = model.predict(user_query, k=10)
+        preds = list(zip(moutput[0], moutput[1]))    
+        cum_prob = 0
+        for pred in preds:
+            categories.append(pred[0].replace('__label__', ''))
+            cum_prob += pred[1]
+            if cum_prob > threshold:
+                break
+            else:
+                continue
+    
+    filters = None
+    if len(categories) > 0:
+        filters = {
+            "terms": {
+                "categoryPathIds": categories
+            }
+        }
+
+    # Try sorting the results by something other than relevance, e.g., price or sales rank.
+    sort = "salePrice"
+    
+    query_obj = create_query(user_query, click_prior_query=None, filters=filters, sort=sort, sortDir=sortDir, source=["name", "shortDescription"])
     logging.info(query_obj)
     response = client.search(query_obj, index=index)
     if response and response['hits']['hits'] and len(response['hits']['hits']) > 0:
