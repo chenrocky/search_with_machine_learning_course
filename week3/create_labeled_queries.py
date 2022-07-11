@@ -12,7 +12,7 @@ stemmer = nltk.stem.PorterStemmer()
 categories_file_name = r'/workspace/datasets/product_data/categories/categories_0001_abcat0010000_to_pcmcat99300050000.xml'
 
 queries_file_name = r'/workspace/datasets/train.csv'
-output_file_name = r'/workspace/datasets/labeled_query_data.txt'
+output_file_name = r'/workspace/datasets/fasttext/labeled_queries.txt'
 
 parser = argparse.ArgumentParser(description='Process arguments.')
 general = parser.add_argument_group("general")
@@ -49,8 +49,32 @@ df = pd.read_csv(queries_file_name)[['category', 'query']]
 df = df[df['category'].isin(categories)]
 
 # IMPLEMENT ME: Convert queries to lowercase, and optionally implement other normalization, like stemming.
+# lowercase
+df["query_normalized"] = df["query"].str.lower()
+# stripping quotation marks, and removing any other punctuation or unusual characters. Treat anything that’s not a number or letter as a space
+df["query_normalized"].replace({r"[^a-zA-Z0-9]": " "}, regex=True, inplace=True)
+# trim multiple spaces to a single space
+df["query_normalized"].replace({r"\s+": " "}, regex=True, inplace=True)
 
 # IMPLEMENT ME: Roll up categories to ancestors to satisfy the minimum number of queries per category.
+if len(list(df["category"].value_counts().loc[lambda x : x<args.min_queries].index)) == 0:
+    done = True
+else:
+    done = False
+while not done:
+    # get categories to map to ancestor
+    map_to_ancestors = list(df["category"].value_counts().loc[lambda x : x<args.min_queries].index)
+    # get category to parent maps
+    maps_df = parents_df[parents_df["category"].isin(map_to_ancestors)].reset_index(drop=True)
+    maps_dict = dict(zip(maps_df["category"], maps_df["parent"]))
+    # map categories to parent
+    # TODO: instead of mapping all at once, could map one by one (in ascending order of occurance count) then check to see if the parent has enough after each map but cba
+    df["category"].replace(maps_dict, inplace=True)
+    # check if done
+    if len(list(df["category"].value_counts().loc[lambda x : x<args.min_queries].index)) == 0:
+        done = True
+    else:
+        done = False
 
 # Create labels in fastText format.
 df['label'] = '__label__' + df['category']
