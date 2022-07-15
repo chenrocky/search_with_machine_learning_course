@@ -190,6 +190,22 @@ def create_query(user_query, click_prior_query, filters, sort="_score", sortDir=
     return query_obj
 
 
+def create_query_embedding(query, num_results=5):
+    qe = model.encode([query])
+    qo = {
+        "size": num_results,
+        "query": {
+            "knn": {
+                "name_embedding": {
+                    "vector": list(qe[0]),
+                    "k": num_results
+                }
+            }
+        }
+    }
+    return qo
+
+
 def search(client, user_query, model=None, index="bbuy_products", sort="_score", sortDir="desc"):
     #### W3: classify the query
     #### W3: create filters and boosts
